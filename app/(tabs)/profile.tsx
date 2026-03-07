@@ -11,7 +11,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Photo, Profile } from '@/types/database';
@@ -23,8 +22,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const THUMB_SIZE = (SCREEN_WIDTH - 32 - 8) / 3;
 
 export default function ProfileScreen() {
-  const { user, isGuest, signOut } = useAuth();
-  const router = useRouter();
+  const { user, signOut } = useAuth();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -97,35 +95,6 @@ export default function ProfileScreen() {
 
   const ListHeader = (
     <View style={{ padding: 16, paddingTop: 60 }}>
-      {/* Guest banner */}
-      {isGuest && (
-        <TouchableOpacity
-          onPress={() => router.push('/(auth)/login')}
-          style={{
-            backgroundColor: Colors.tint + '22',
-            borderWidth: 1,
-            borderColor: Colors.tint,
-            borderRadius: 12,
-            padding: 14,
-            marginBottom: 20,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 10,
-          }}
-        >
-          <Text style={{ fontSize: 20 }}>✨</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: Colors.tint, fontWeight: '700', fontSize: 14 }}>
-              You're browsing as a guest
-            </Text>
-            <Text style={{ color: Colors.textSecondary, fontSize: 12, marginTop: 2 }}>
-              Create an account to post and keep your votes
-            </Text>
-          </View>
-          <Text style={{ color: Colors.tint, fontSize: 18 }}>›</Text>
-        </TouchableOpacity>
-      )}
-
       {/* Avatar + username */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 }}>
         <Avatar url={profile?.avatar_url} username={profile?.username} size={64} />
@@ -177,11 +146,9 @@ export default function ProfileScreen() {
               <Text style={{ color: Colors.text, fontSize: 18, fontWeight: '700' }}>
                 {profile?.username ?? 'Anonymous'}
               </Text>
-              {!isGuest && (
-                <TouchableOpacity onPress={() => setIsEditingUsername(true)} style={{ marginTop: 4 }}>
-                  <Text style={{ color: Colors.tint, fontSize: 13 }}>Edit username</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity onPress={() => setIsEditingUsername(true)} style={{ marginTop: 4 }}>
+                <Text style={{ color: Colors.tint, fontSize: 13 }}>Edit username</Text>
+              </TouchableOpacity>
             </>
           )}
         </View>
