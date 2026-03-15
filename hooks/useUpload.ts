@@ -9,6 +9,18 @@ export interface UploadState {
   error: string | null;
 }
 
+function getMimeType(asset: ImagePicker.ImagePickerAsset): string {
+  // expo-image-picker provides mimeType on web; fall back to parsing the URI
+  if (asset.mimeType) return asset.mimeType;
+  const ext = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpeg';
+  return `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+}
+
+function getExtension(mimeType: string): string {
+  const sub = mimeType.split('/')[1] ?? 'jpeg';
+  return sub === 'jpeg' ? 'jpg' : sub;
+}
+
 export function useUpload() {
   const { user } = useAuth();
   const [state, setState] = useState<UploadState>({ isLoading: false, error: null });
@@ -30,14 +42,13 @@ export function useUpload() {
 
     try {
       const asset = result.assets[0];
-      const ext = asset.uri.split('.').pop() ?? 'jpg';
-      const fileName = `${Date.now()}.${ext}`;
-      const storagePath = `${user.id}/${fileName}`;
-      const contentType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+      const mimeType = getMimeType(asset);
+      const ext = getExtension(mimeType);
+      const storagePath = `${user.id}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('photos')
-        .upload(storagePath, decode(asset.base64!), { contentType });
+        .upload(storagePath, decode(asset.base64!), { contentType: mimeType });
 
       if (uploadError) throw uploadError;
 
@@ -48,7 +59,6 @@ export function useUpload() {
       });
 
       if (insertError) {
-        // Clean up storage on insert failure
         await supabase.storage.from('photos').remove([storagePath]);
         throw insertError;
       }
@@ -56,10 +66,9 @@ export function useUpload() {
       setState({ isLoading: false, error: null });
       return true;
     } catch (err: unknown) {
-      setState({
-        isLoading: false,
-        error: err instanceof Error ? err.message : 'Upload failed',
-      });
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      console.error('[useUpload]', err);
+      setState({ isLoading: false, error: message });
       return false;
     }
   };

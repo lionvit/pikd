@@ -27,7 +27,10 @@ export function useFeed() {
         .order('created_at', { ascending: false })
         .range(from, to);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useFeed] query error:', error);
+        throw error;
+      }
 
       // Fetch user's votes for this page of photos
       let votedIds = new Set<string>();
